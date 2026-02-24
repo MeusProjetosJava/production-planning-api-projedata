@@ -3,6 +3,8 @@ package vitor.productionplanningapiprojedata.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vitor.productionplanningapiprojedata.dto.RequestProductDTO;
+import vitor.productionplanningapiprojedata.dto.ResponseProductDTO;
 import vitor.productionplanningapiprojedata.entity.Product;
 import vitor.productionplanningapiprojedata.repository.ProductRepository;
 
@@ -15,24 +17,40 @@ public class ProductService {
 
     private final ProductRepository productRepository;
 
-    public Product create(Product product) {
+    public ResponseProductDTO create(RequestProductDTO dto) {
 
-        if (productRepository.existsByCode(product.getCode())) {
+        if (productRepository.existsByCode(dto.code())) {
             throw new RuntimeException("Product code already exists.");
         }
 
-        return productRepository.save(product);
+        Product product = Product.builder()
+                .code(dto.code())
+                .name(dto.name())
+                .price(dto.price())
+                .build();
+
+        Product saved = productRepository.save(product);
+
+        return mapToResponse(saved);
     }
 
-    public Product update(Long id, Product updatedProduct) {
+    public ResponseProductDTO update(Long id, RequestProductDTO dto) {
 
         Product existing = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found."));
 
-        existing.setName(updatedProduct.getName());
-        existing.setPrice(updatedProduct.getPrice());
+        if (!existing.getCode().equals(dto.code())
+        && productRepository.existsByCode(dto.code())) {
+            throw new RuntimeException("Product code already exists.");
+        }
 
-        return productRepository.save(existing);
+        existing.setCode(dto.code());
+        existing.setName(dto.name());
+        existing.setPrice(dto.price());
+
+        Product saved = productRepository.save(existing);
+
+        return mapToResponse(saved);
     }
 
     public void delete(Long id) {
@@ -45,13 +63,27 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public List<Product> findAll() {
-        return productRepository.findAll();
+    public List<ResponseProductDTO> findAll()
+    {
+        return productRepository.findAll().stream().map(this::mapToResponse).toList();
     }
 
     @Transactional(readOnly = true)
-    public Product findById(Long id) {
-        return productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found."));
+    public ResponseProductDTO findById(Long id) {
+
+        Product product = productRepository.findById(id).orElseThrow(() -> new RuntimeException("Product not found."));
+
+        return mapToResponse(product);
+    }
+
+
+    private ResponseProductDTO mapToResponse(Product product) {
+        return new ResponseProductDTO(
+                product.getId(),
+                product.getCode(),
+                product.getName(),
+                product.getPrice()
+
+        );
     }
 }

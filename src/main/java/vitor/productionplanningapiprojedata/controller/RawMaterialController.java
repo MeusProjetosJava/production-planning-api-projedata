@@ -1,9 +1,11 @@
 package vitor.productionplanningapiprojedata.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import vitor.productionplanningapiprojedata.entity.RawMaterial;
+import vitor.productionplanningapiprojedata.dto.RequestRawMaterialDTO;
+import vitor.productionplanningapiprojedata.dto.ResponseRawMaterialDTO;
 import vitor.productionplanningapiprojedata.service.RawMaterialService;
 
 import java.net.URI;
@@ -17,29 +19,33 @@ public class RawMaterialController {
     private final RawMaterialService rawMaterialService;
 
     @PostMapping
-    public ResponseEntity<RawMaterial> create(@RequestBody RawMaterial rawMaterial) {
-        RawMaterial saved = rawMaterialService.create(rawMaterial);
+    public ResponseEntity<ResponseRawMaterialDTO> create(
+            @Valid @RequestBody RequestRawMaterialDTO dto
+    ) {
+
+        ResponseRawMaterialDTO saved = rawMaterialService.create(dto);
+
         return ResponseEntity
-                .created(URI.create("/api/raw-materials/" + saved.getId()))
+                .created(URI.create("/api/raw-materials/" + saved.id()))
                 .body(saved);
     }
 
     @GetMapping
-    public ResponseEntity<List<RawMaterial>> findAll() {
+    public ResponseEntity<List<ResponseRawMaterialDTO>> findAll() {
         return ResponseEntity.ok(rawMaterialService.findAll());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<RawMaterial> findById(@PathVariable Long id) {
+    public ResponseEntity<ResponseRawMaterialDTO> findById(@PathVariable Long id) {
         return ResponseEntity.ok(rawMaterialService.findById(id));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<RawMaterial> update(
+    public ResponseEntity<ResponseRawMaterialDTO> update(
             @PathVariable Long id,
-            @RequestBody RawMaterial rawMaterial
+            @Valid @RequestBody RequestRawMaterialDTO dto
     ) {
-        return ResponseEntity.ok(rawMaterialService.update(id, rawMaterial));
+        return ResponseEntity.ok(rawMaterialService.update(id, dto));
     }
 
     @DeleteMapping("/{id}")

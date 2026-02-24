@@ -3,6 +3,8 @@ package vitor.productionplanningapiprojedata.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vitor.productionplanningapiprojedata.dto.RequestRawMaterialDTO;
+import vitor.productionplanningapiprojedata.dto.ResponseRawMaterialDTO;
 import vitor.productionplanningapiprojedata.entity.RawMaterial;
 import vitor.productionplanningapiprojedata.repository.RawMaterialRepository;
 
@@ -15,43 +17,74 @@ public class RawMaterialService {
 
     private final RawMaterialRepository rawMaterialRepository;
 
-    public RawMaterial create(RawMaterial rawMaterial) {
+    public ResponseRawMaterialDTO create(RequestRawMaterialDTO dto) {
 
-        if (rawMaterialRepository.existsByCode(rawMaterial.getCode())) {
+        if (rawMaterialRepository.existsByCode(dto.code())) {
             throw new RuntimeException("Raw material code already exists.");
         }
 
-        return rawMaterialRepository.save(rawMaterial);
+        RawMaterial rawMaterial = RawMaterial.builder()
+                .code(dto.code())
+                .name(dto.name())
+                .stockQuantity(dto.stockQuantity())
+                .build();
+
+        RawMaterial saved = rawMaterialRepository.save(rawMaterial);
+
+        return mapToResponse(saved);
     }
 
-    public RawMaterial update(Long id, RawMaterial updatedRawMaterial) {
+    public ResponseRawMaterialDTO update(Long id, RequestRawMaterialDTO dto) {
 
         RawMaterial existing = rawMaterialRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Raw material not found."));
 
-        existing.setName(updatedRawMaterial.getName());
-        existing.setStockQuantity(updatedRawMaterial.getStockQuantity());
+        if (!existing.getCode().equals(dto.code())
+                && rawMaterialRepository.existsByCode(dto.code())) {
+            throw new RuntimeException("Raw material code already exists.");
+        }
 
-        return rawMaterialRepository.save(existing);
+        existing.setCode(dto.code());
+        existing.setName(dto.name());
+        existing.setStockQuantity(dto.stockQuantity());
+
+        RawMaterial saved = rawMaterialRepository.save(existing);
+
+        return mapToResponse(saved);
     }
 
     public void delete(Long id) {
 
-        if (!rawMaterialRepository.existsById(id)) {
-            throw new RuntimeException("Raw material not found.");
-        }
-
-        rawMaterialRepository.deleteById(id);
-    }
-
-    @Transactional(readOnly = true)
-    public List<RawMaterial> findAll() {
-        return rawMaterialRepository.findAll();
-    }
-
-    @Transactional(readOnly = true)
-    public RawMaterial findById(Long id) {
-        return rawMaterialRepository.findById(id)
+        RawMaterial existing = rawMaterialRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Raw material not found."));
+
+        rawMaterialRepository.delete(existing);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ResponseRawMaterialDTO> findAll() {
+
+        return rawMaterialRepository.findAll()
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public ResponseRawMaterialDTO findById(Long id) {
+
+        RawMaterial rawMaterial = rawMaterialRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Raw material not found."));
+
+        return mapToResponse(rawMaterial);
+    }
+
+    private ResponseRawMaterialDTO mapToResponse(RawMaterial rawMaterial) {
+        return new ResponseRawMaterialDTO(
+                rawMaterial.getId(),
+                rawMaterial.getCode(),
+                rawMaterial.getName(),
+                rawMaterial.getStockQuantity()
+        );
     }
 }
