@@ -8,5 +8,5 @@ import java.util.List;
 public interface ProductRecipeItemRepository extends JpaRepository<ProductRecipeItem, Long> {
 
     List<ProductRecipeItem> findByProductId(long productId);
-
+    boolean existsByProductIdAndRawMaterialId(Long productId, Long rawMaterialId);
 }

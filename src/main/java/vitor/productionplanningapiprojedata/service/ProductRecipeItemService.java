@@ -3,6 +3,8 @@ package vitor.productionplanningapiprojedata.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vitor.productionplanningapiprojedata.dto.ResponseProductRecipeItemDTO;
+import vitor.productionplanningapiprojedata.dto.RequestProductRecipeItemDTO;
 import vitor.productionplanningapiprojedata.entity.Product;
 import vitor.productionplanningapiprojedata.entity.ProductRecipeItem;
 import vitor.productionplanningapiprojedata.entity.RawMaterial;
@@ -21,34 +23,43 @@ public class ProductRecipeItemService {
     private final ProductRepository productRepository;
     private final RawMaterialRepository rawMaterialRepository;
 
-    public ProductRecipeItem addRawMaterialToProduct(
-            Long productId,
-            Long rawMaterialId,
-            Integer quantityRequired
+    public ResponseProductRecipeItemDTO addRawMaterialToProduct(
+            RequestProductRecipeItemDTO dto
     ) {
 
-        Product product = productRepository.findById(productId)
+        Product product = productRepository.findById(dto.productId())
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
-        RawMaterial rawMaterial = rawMaterialRepository.findById(rawMaterialId)
+        RawMaterial rawMaterial = rawMaterialRepository.findById(dto.rawMaterialId())
                 .orElseThrow(() -> new RuntimeException("Raw material not found"));
+
+        if (recipeRepository.existsByProductIdAndRawMaterialId(
+                dto.productId(), dto.rawMaterialId()
+        )) {
+            throw new RuntimeException("This raw material is already linked to the product");
+        }
 
         ProductRecipeItem item = ProductRecipeItem.builder()
                 .product(product)
                 .rawMaterial(rawMaterial)
-                .quantityRequired(quantityRequired)
+                .quantityRequired(dto.quantityRequired())
                 .build();
 
-        return recipeRepository.save(item);
+        ProductRecipeItem saved = recipeRepository.save(item);
+
+        return mapToResponse(saved);
     }
 
     @Transactional(readOnly = true)
-    public List<ProductRecipeItem> findByProduct(Long productId) {
+    public List<ResponseProductRecipeItemDTO> findByProduct(Long productId) {
 
         productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
-        return recipeRepository.findByProductId(productId);
+        return recipeRepository.findByProductId(productId)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 
     public void removeItem(Long recipeItemId) {
@@ -58,5 +69,16 @@ public class ProductRecipeItemService {
         }
 
         recipeRepository.deleteById(recipeItemId);
+    }
+
+    private ResponseProductRecipeItemDTO mapToResponse(ProductRecipeItem item) {
+        return new ResponseProductRecipeItemDTO(
+                item.getId(),
+                item.getProduct().getId(),
+                item.getProduct().getCode(),
+                item.getRawMaterial().getId(),
+                item.getRawMaterial().getCode(),
+                item.getQuantityRequired()
+        );
     }
 }
