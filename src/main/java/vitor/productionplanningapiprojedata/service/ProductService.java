@@ -6,6 +6,8 @@ import org.springframework.transaction.annotation.Transactional;
 import vitor.productionplanningapiprojedata.dto.RequestProductDTO;
 import vitor.productionplanningapiprojedata.dto.ResponseProductDTO;
 import vitor.productionplanningapiprojedata.entity.Product;
+import vitor.productionplanningapiprojedata.exception.DuplicateResourceException;
+import vitor.productionplanningapiprojedata.exception.ResourceNotFoundException;
 import vitor.productionplanningapiprojedata.repository.ProductRepository;
 
 import java.util.List;
@@ -20,7 +22,7 @@ public class ProductService {
     public ResponseProductDTO create(RequestProductDTO dto) {
 
         if (productRepository.existsByCode(dto.code())) {
-            throw new RuntimeException("Product code already exists.");
+            throw new DuplicateResourceException("Product code already exists.");
         }
 
         Product product = Product.builder()
@@ -37,11 +39,11 @@ public class ProductService {
     public ResponseProductDTO update(Long id, RequestProductDTO dto) {
 
         Product existing = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found."));
 
         if (!existing.getCode().equals(dto.code())
         && productRepository.existsByCode(dto.code())) {
-            throw new RuntimeException("Product code already exists.");
+            throw new DuplicateResourceException("Product code already exists.");
         }
 
         existing.setCode(dto.code());
@@ -56,7 +58,7 @@ public class ProductService {
     public void delete(Long id) {
 
         if (!productRepository.existsById(id)) {
-            throw new RuntimeException("Product not found.");
+            throw new ResourceNotFoundException("Product not found.");
         }
 
         productRepository.deleteById(id);

@@ -8,6 +8,8 @@ import vitor.productionplanningapiprojedata.dto.RequestProductRecipeItemDTO;
 import vitor.productionplanningapiprojedata.entity.Product;
 import vitor.productionplanningapiprojedata.entity.ProductRecipeItem;
 import vitor.productionplanningapiprojedata.entity.RawMaterial;
+import vitor.productionplanningapiprojedata.exception.DuplicateResourceException;
+import vitor.productionplanningapiprojedata.exception.ResourceNotFoundException;
 import vitor.productionplanningapiprojedata.repository.ProductRecipeItemRepository;
 import vitor.productionplanningapiprojedata.repository.ProductRepository;
 import vitor.productionplanningapiprojedata.repository.RawMaterialRepository;
@@ -28,15 +30,15 @@ public class ProductRecipeItemService {
     ) {
 
         Product product = productRepository.findById(dto.productId())
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
         RawMaterial rawMaterial = rawMaterialRepository.findById(dto.rawMaterialId())
-                .orElseThrow(() -> new RuntimeException("Raw material not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Raw material not found"));
 
         if (recipeRepository.existsByProductIdAndRawMaterialId(
                 dto.productId(), dto.rawMaterialId()
         )) {
-            throw new RuntimeException("This raw material is already linked to the product");
+            throw new DuplicateResourceException("This raw material is already linked to the product");
         }
 
         ProductRecipeItem item = ProductRecipeItem.builder()
@@ -54,7 +56,7 @@ public class ProductRecipeItemService {
     public List<ResponseProductRecipeItemDTO> findByProduct(Long productId) {
 
         productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
         return recipeRepository.findByProductId(productId)
                 .stream()
@@ -65,7 +67,7 @@ public class ProductRecipeItemService {
     public void removeItem(Long recipeItemId) {
 
         if (!recipeRepository.existsById(recipeItemId)) {
-            throw new RuntimeException("Recipe item not found");
+            throw new ResourceNotFoundException("Recipe item not found");
         }
 
         recipeRepository.deleteById(recipeItemId);

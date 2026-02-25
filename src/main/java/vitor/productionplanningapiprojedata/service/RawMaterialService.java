@@ -6,6 +6,8 @@ import org.springframework.transaction.annotation.Transactional;
 import vitor.productionplanningapiprojedata.dto.RequestRawMaterialDTO;
 import vitor.productionplanningapiprojedata.dto.ResponseRawMaterialDTO;
 import vitor.productionplanningapiprojedata.entity.RawMaterial;
+import vitor.productionplanningapiprojedata.exception.DuplicateResourceException;
+import vitor.productionplanningapiprojedata.exception.ResourceNotFoundException;
 import vitor.productionplanningapiprojedata.repository.RawMaterialRepository;
 
 import java.util.List;
@@ -20,7 +22,7 @@ public class RawMaterialService {
     public ResponseRawMaterialDTO create(RequestRawMaterialDTO dto) {
 
         if (rawMaterialRepository.existsByCode(dto.code())) {
-            throw new RuntimeException("Raw material code already exists.");
+            throw new DuplicateResourceException("Raw material code already exists.");
         }
 
         RawMaterial rawMaterial = RawMaterial.builder()
@@ -37,11 +39,11 @@ public class RawMaterialService {
     public ResponseRawMaterialDTO update(Long id, RequestRawMaterialDTO dto) {
 
         RawMaterial existing = rawMaterialRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Raw material not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Raw material not found."));
 
         if (!existing.getCode().equals(dto.code())
                 && rawMaterialRepository.existsByCode(dto.code())) {
-            throw new RuntimeException("Raw material code already exists.");
+            throw new DuplicateResourceException("Raw material code already exists.");
         }
 
         existing.setCode(dto.code());
@@ -56,7 +58,7 @@ public class RawMaterialService {
     public void delete(Long id) {
 
         RawMaterial existing = rawMaterialRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Raw material not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Raw material not found."));
 
         rawMaterialRepository.delete(existing);
     }
@@ -74,7 +76,7 @@ public class RawMaterialService {
     public ResponseRawMaterialDTO findById(Long id) {
 
         RawMaterial rawMaterial = rawMaterialRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Raw material not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Raw material not found."));
 
         return mapToResponse(rawMaterial);
     }
