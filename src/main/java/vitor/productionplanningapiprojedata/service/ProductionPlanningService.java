@@ -22,9 +22,12 @@ public class ProductionPlanningService {
     @Transactional(readOnly = true)
     public ProductionPlanningResponseDTO generatePlan() {
 
-        List<Product> products = productRepository.findAllWithRecipeItems();
+        List<Product> products = new ArrayList<>(productRepository.findAllWithRecipeItems());
 
-        products.sort(Comparator.comparing(Product::getPrice, Comparator.nullsLast(BigDecimal::compareTo)).reversed());
+        products.sort(
+                Comparator.comparing(Product::getPrice, Comparator.nullsLast(BigDecimal::compareTo))
+                        .reversed()
+        );
 
         Map<Long, Integer> virtualStock = new HashMap<>();
         for (Product p : products) {
