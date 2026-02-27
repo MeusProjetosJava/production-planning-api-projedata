@@ -31,7 +31,7 @@ public class ProductionPlanningService {
 
         Map<Long, Integer> virtualStock = new HashMap<>();
         for (Product p : products) {
-            if (p.getRecipeItems() == null) continue;
+            if (p.getRecipeItems().isEmpty()) continue;
 
             for (ProductRecipeItem item : p.getRecipeItems()) {
                 RawMaterial rm = item.getRawMaterial();
