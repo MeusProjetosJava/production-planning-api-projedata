@@ -85,12 +85,12 @@ public class ProductionPlanningService {
             if (rm == null) return 0;
 
             int required = safeInt(item.getQuantityRequired());
-            if (required <= 0) return 0; // receita inválida -> não produz
+            if (required <= 0) return 0;
 
             Integer available = virtualStock.get(rm.getId());
             if (available == null) available = safeInt(rm.getStockQuantity());
 
-            int possible = available / required; // divisão inteira
+            int possible = available / required;
             max = Math.min(max, possible);
         }
 
